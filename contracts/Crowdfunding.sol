@@ -1,8 +1,12 @@
-// We will be using Solidity version 0.5.4
-pragma solidity 0.5.4;
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.7.0 <=0.9.0;
 // Importing OpenZeppelin's SafeMath Implementation
-import 'https://github.com/OpenZeppelin/openzeppelin-solidity/contracts/math/SafeMath.sol';
 
+
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol";
+
+
+// We will be using Solidity version 0.5.4
 
 contract Crowdfunding {
     using SafeMath for uint256;
@@ -32,8 +36,8 @@ contract Crowdfunding {
         uint durationInDays,
         uint amountToRaise
     ) external {
-        uint raiseUntil = now.add(durationInDays.mul(1 days));
-        Project newProject = new Project(msg.sender, title, description, raiseUntil, amountToRaise);
+        uint raiseUntil = block.timestamp.add(durationInDays.mul(1 days));
+        Project newProject = new Project(payable(msg.sender), title, description, raiseUntil, amountToRaise);
         projects.push(newProject);
         emit ProjectStarted(
             address(newProject),
@@ -99,7 +103,7 @@ contract Project {
         string memory projectDesc,
         uint fundRaisingDeadline,
         uint goalAmount
-    ) public {
+    )  {
         creator = projectStarter;
         title = projectTitle;
         description = projectDesc;
@@ -124,10 +128,10 @@ contract Project {
         if (currentBalance >= amountGoal) {
             state = State.Successful;
             payOut();
-        } else if (now > raiseBy)  {
+        } else if (block.timestamp > raiseBy)  {
             state = State.Expired;
         }
-        completeAt = now;
+        completeAt = block.timestamp;
     }
 
     /** @dev Function to give the received funds to project starter.
@@ -155,7 +159,7 @@ contract Project {
         uint amountToRefund = contributions[msg.sender];
         contributions[msg.sender] = 0;
 
-        if (!msg.sender.send(amountToRefund)) {
+        if (!payable(msg.sender).send(amountToRefund)) {
             contributions[msg.sender] = amountToRefund;
             return false;
         } else {
@@ -165,9 +169,9 @@ contract Project {
         return true;
     }
 
-    /** @dev Function to get specific information about the project.
-      * @return Returns all the project's details
-      */
+    //** @dev Function to get specific information about the project.
+    //  * @return Returns all the project's details
+    //  */
     function getDetails() public view returns 
     (
         address payable projectStarter,
